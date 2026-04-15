@@ -86,20 +86,28 @@ namespace Ecommerce_API.Services
         public string GenerateJwtToken(Models.User user)
         {
             if (user is null) throw new ArgumentNullException(nameof(user));
-
-            var key = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT signing key is not configured (Jwt:Key).");
+            var keyString = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT signing key is not configured (Jwt:Key).");
             var issuer = _configuration["Jwt:Issuer"];
             var audience = _configuration["Jwt:Audience"];
             var expiryMinutes = 60;
             if (int.TryParse(_configuration["Jwt:ExpiryMinutes"], out var cfgMinutes)) expiryMinutes = cfgMinutes;
 
-            var securityKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            // Ensure the signing key is at least 256 bits (32 bytes). If not, derive a 256-bit key by hashing the provided secret.
+            var keyBytes = Encoding.UTF8.GetBytes(keyString);
+            if (keyBytes.Length < 32)
+            {
+                using var sha = System.Security.Cryptography.SHA256.Create();
+                keyBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(keyString));
+            }
+
+            var securityKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(keyBytes);
             var credentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(securityKey, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim("role", user.Role.ToString())
             };
 
