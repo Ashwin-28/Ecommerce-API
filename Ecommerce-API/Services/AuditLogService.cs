@@ -12,12 +12,13 @@ namespace Ecommerce_API.Services
             _context = context;
         }
 
+        // CREATE LOG ENTRY
         public async Task LogAsync(
             Guid? userId,
             string action,
             string entityType,
             string entityId,
-            string details = "")
+            string details)
         {
             var log = new AuditLog
             {
