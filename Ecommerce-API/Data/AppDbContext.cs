@@ -20,6 +20,7 @@ namespace Ecommerce_API.Data
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<ActiveSession> ActiveSessions { get; set; } 
 
-    }
+        }
 }
